@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <!-- 视口设置：禁止缩放，适配移动端宽度 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>吉林惟石生物 - 移动办公系统</title>
+    <!-- 引入图标库 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #0f2440; /* 藏蓝色 */
+            --accent-gold: #c5a065; /* 土金色 */
+            --text-white: #ffffff;
+            --bg-light: #f4f6f9;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --sidebar-width: 250px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft YaHei", sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background-color: var(--bg-light); overflow-x: hidden; /* 防止横向滚动 */ }
+
+        /* --- 背景动画 (保持不变) --- */
+        .bg-animation {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: linear-gradient(135deg, #fdfbf7 0%, #eef2f5 100%);
+        }
+        .cell {
+            position: absolute; border-radius: 50%; opacity: 0.1;
+            background: var(--primary-blue); animation: float 15s infinite linear;
+        }
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-100vh) rotate(360deg); }
+        }
+
+        /* --- 登录界面 (适配手机) --- */
+        #login-page {
+            display: flex; justify-content: center; align-items: center; height: 100vh;
+            background-image: url('http://weishishengwu.cn/upload/202105/1620872579.jpg');
+            background-size: cover; background-position: center; position: relative; padding: 20px;
+        }
+        #login-page::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 36, 64, 0.85);
+        }
+        .login-box {
+            position: relative; width: 100%; max-width: 400px; background: white; padding: 30px 20px;
+            border-radius: 8px; border-top: 5px solid var(--accent-gold);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center;
+        }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; color: var(--primary-blue); font-weight: bold; font-size: 14px; }
+        .form-control {
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; /* 手机上字号大一点 */
+            transition: border-color 0.3s; appearance: none; /* 去除iOS默认样式 */
+        }
+        .btn-login {
+            width: 100%; padding: 12px; background: var(--primary-blue); color: white;
+            border: none; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 10px;
+        }
+
+        /* --- 主界面布局 --- */
+        #app-layout { display: none; height: 100vh; display: flex; position: relative; overflow: hidden; }
+        
+        /* 侧边栏 (适配手机：默认隐藏) */
+        .sidebar {
+            width: var(--sidebar-width); background: var(--primary-blue); color: white;
+            display: flex; flex-direction: column; flex-shrink: 0;
+            position: relative; transition: transform 0.3s ease; z-index: 1000;
+        }
+        
+        /* 遮罩层 (仅手机显示) */
+        .sidebar-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 999;
+        }
+
+        .brand {
+            height: 60px; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.1); border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .user-info-mini { padding: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .user-avatar {
+            width: 50px; height: 50px; border-radius: 50%; background: var(--accent-gold);
+            margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 20px;
+        }
+        .nav-menu { flex: 1; padding: 10px 0; overflow-y: auto; }
+        .nav-item {
+            padding: 15px 20px; cursor: pointer; display: flex; align-items: center; font-size: 15px;
+            transition: all 0.3s; color: rgba(255,255,255,0.7);
+        }
+        .nav-item.active {
+            background: rgba(197, 160, 101, 0.2); color: var(--accent-gold); border-left: 4px solid var(--accent-gold);
+        }
+        .nav-item i { margin-right: 12px; width: 20px; text-align: center; }
+
+        /* 主内容区 */
+        .main-content { flex: 1; display: flex; flex-direction: column; background: #f4f6f9; position: relative; width: 100%; }
+        
+        /* 顶部栏 */
+        .topbar {
+            height: 50px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center; padding: 0 15px;
+            position: relative; z-index: 900;
+        }
+        /* 汉堡菜单按钮 (默认隐藏) */
+        .menu-toggle-btn { display: none; font-size: 20px; color: var(--primary-blue); border: none; background: none; padding: 5px; margin-right: 10px;}
+        
+        .page-title { font-size: 16px; font-weight: bold; color: var(--primary-blue); display: flex; align-items: center; }
+        .top-actions button {
+            background: none; border: none; cursor: pointer; margin-left: 10px; color: #666; font-size: 16px; padding: 5px;
+        }
+
+        /* 内容展示区 */
+        .content-area { flex: 1; padding: 15px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        
+        /* 通用卡片 */
+        .card { 
+            background: white; border-radius: 8px; padding: 15px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 15px; 
+            border-top: 3px solid var(--primary-blue); 
+        }
+        .card h3 { margin-bottom: 15px; color: var(--primary-blue); border-left: 4px solid var(--accent-gold); padding-left: 10px; font-size: 16px; }
+
+        /* 表格适配 (核心修改) */
+        .table-responsive {
+            width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; /* 强制最小宽度，触发滚动 */ }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; white-space: nowrap; }
+        th { background: #f8f9fa; color: var(--primary-blue); font-weight: 600; }
+        
+        .status-badge { padding: 3px 6px; border-radius: 4px; font-size: 11px; color: white; display: inline-block;}
+        .status-pending { background: var(--warning); }
+        .status-approved { background: var(--primary-blue); }
+        .status-done { background: var(--success); }
+        
+        .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 3px; cursor: pointer; border: none; color: white; margin: 2px 0; }
+        .btn-approve { background: var(--success); }
+        .btn-process { background: var(--primary-blue); }
+
+        /* 聊天模块适配 */
+        .chat-container { display: flex; height: calc(100vh - 160px); border: 1px solid #ddd; border-radius: 8px; background: white; overflow: hidden;}
+        .chat-sidebar { width: 200px; border-right: 1px solid #eee; background: #fdfdfd; display: flex; flex-direction: column;}
+        .chat-list-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; font-size: 13px;}
+        .chat-main { flex: 1; display: flex; flex-direction: column; min-width: 0; /* 防止flex子项溢出 */ }
+        .chat-window { flex: 1; padding: 10px; overflow-y: auto; background: #f5f5f5; }
+        .message { margin-bottom: 10px; display: flex; }
+        .msg-bubble { max-width: 85%; padding: 8px 12px; border-radius: 10px; font-size: 14px; word-break: break-all; }
+        .chat-input-area { padding: 10px; border-top: 1px solid #eee; display: flex; align-items: center;}
+        .chat-input-area input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-right: 5px; height: 36px;}
+        
+        /* 模态框适配 */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000;
+            padding: 20px;
+        }
+        .modal-content { 
+            background: white; padding: 20px; border-radius: 8px; 
+            width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; 
+        }
+        
+        .hidden { display: none !important; }
+
+        /* ================= 📱 移动端响应式规则 ================= */
+        @media screen and (max-width: 768px) {
+            /* 侧边栏变为抽屉式 */
+            .sidebar {
+                position: fixed; top: 0; left: 0; height: 100%;
+                transform: translateX(-100%); /* 默认移出屏幕 */
+                box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+            }
+            .sidebar.active { transform: translateX(0); }
+            .sidebar-overlay.active { display: block; }
+
+            /* 显示汉堡按钮 */
+            .menu-toggle-btn { display: block; }
+
+            /* 聊天界面改为垂直堆叠，缩小左侧列表 */
+            .chat-container { flex-direction: column; height: 500px; }
+            .chat-sidebar { width: 100%; height: 60px; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid #eee; }
+            .chat-list-item { min-width: 140px; border-bottom: none; border-right: 1px solid #eee; }
+
+            /* 卡片内距缩小 */
+            .card { padding: 12px; }
+            
+            /* 统计数据堆叠 */
+            .stat-row { flex-direction: column; gap: 10px !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 背景装饰 -->
+    <div class="bg-animation" id="bg-canvas"></div>
+
+    <!-- 1. 登录页面 -->
+    <div id="login-page">
+        <div class="login-box">
+            <div class="login-logo">
+                <h2 style="color: var(--primary-blue); font-weight: bold; font-size: 22px;">惟石生物科技</h2>
+                <p style="color: var(--accent-gold); font-size: 10px; letter-spacing: 1px; margin-bottom: 20px;">WEISHI BIOTECHNOLOGY</p>
+            </div>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>选择部门</label>
+                    <select class="form-control" id="login-dept" required>
+                        <option value="market">市场销售部</option>
+                        <option value="cs">客户服务部</option>
+                        <option value="lab">实验室</option>
+                        <option value="gm">总经办</option>
+                        <option value="office">综合办公室</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>姓名</label>
+                    <input type="text" class="form-control" id="login-name" placeholder="请输入您的姓名" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" class="form-control" id="login-pwd" placeholder="初始密码: 88888" required>
+                </div>
+                <button type="submit" class="btn-login">登录系统</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 手机端侧边栏遮罩 -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- 2. 系统主界面 -->
+    <div id="app-layout" class="hidden">
+        <!-- 侧边栏 -->
+        <div class="sidebar" id="sidebar">
+            <div class="brand">
+                <span style="font-weight:bold; font-size:18px;">WS-OA System</span>
+            </div>
+            <div class="user-info-mini">
+                <div class="user-avatar" id="nav-avatar"><i class="fas fa-user"></i></div>
+                <div id="nav-username" style="font-weight:bold;">张三</div>
+                <div id="nav-dept" style="font-size: 12px; color: #ccc; margin-top: 5px;">市场部</div>
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-item active" onclick="showModule('dashboard'); toggleSidebar()"><i class="fas fa-home"></i> 工作台</div>
+                <div class="nav-item" onclick="showModule('order'); toggleSidebar()"><i class="fas fa-dna"></i> 客户回输订单</div>
+                <div class="nav-item" onclick="showModule('reception'); toggleSidebar()"><i class="fas fa-handshake"></i> 客户接待管理</div>
+                <div class="nav-item" onclick="showModule('attendance'); toggleSidebar()"><i class="fas fa-clock"></i> 考勤管理</div>
+                <div class="nav-item" onclick="showModule('chat'); toggleSidebar()"><i class="fas fa-comments"></i> 内部沟通</div>
+                <div class="nav-item" onclick="showModule('profile'); toggleSidebar()"><i class="fas fa-cog"></i> 个人中心</div>
+            </nav>
+        </div>
+
+        <!-- 主体内容 -->
+        <div class="main-content">
+            <div class="topbar">
+                <div class="page-title">
+                    <!-- 汉堡按钮 -->
+                    <button class="menu-toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <span id="page-title">工作台</span>
+                </div>
+                <div class="top-actions">
+                    <button onclick="alert('系统通知：下午3点全体会议')"><i class="fas fa-bell"></i></button>
+                    <button onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+
+            <div class="content-area" id="main-container">
+                <!-- 动态内容将注入这里 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框：通用申请表单 -->
+    <div id="modal-form" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">申请表单</h3>
+            <div id="modal-body" style="margin: 15px 0;"></div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="btn-sm" style="background:#eee; color:#333; padding: 8px 15px; margin-right: 10px;" onclick="closeModal()">取消</button>
+                <button class="btn-sm btn-process" style="padding: 8px 15px;" onclick="submitModalForm()">提交</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 移动端侧边栏切换逻辑 ---
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('sidebar-overlay');
+            // 切换类名
+            if (sb.classList.contains('active')) {
+                sb.classList.remove('active');
+                ov.classList.remove('active');
+            } else {
+                sb.classList.add('active');
+                ov.classList.add('active');
+            }
+        }
+
+        // --- 生成背景细胞 (逻辑不变) ---
+        const bg = document.getElementById('bg-canvas');
+        for(let i=0; i<10; i++) { // 减少手机端数量提升性能
+            let div = document.createElement('div');
+            div.className = 'cell';
+            let size = Math.random() * 60 + 30;
+            div.style.width = size + 'px';
+            div.style.height = size + 'px';
+            div.style.left = Math.random() * 100 + '%';
+            div.style.top = Math.random() * 100 + '%';
+            div.style.animationDuration = (Math.random() * 10 + 15) + 's';
+            bg.appendChild(div);
+        }
+
+        // --- 全局数据模拟 (LocalStorage) ---
+        const STORAGE_KEY = 'WS_OA_DATA_V2_MOBILE'; // 更改Key以免冲突
+        let currentUser = null;
+
+        let db = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+            orders: [],     
+            receptions: [], 
+            leaves: [],     
+            users: {},      
+            chats: [        
+                { type: 'group', name: '全员大群', msgs: [{sender:'系统', text:'欢迎使用惟石生物移动办公系统', time:'12:00'}] }
+            ]
+        };
+
+        function saveDB() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+        }
+
+        // --- 1. 登录逻辑 (逻辑不变) ---
+        function handleLogin(e) {
+            e.preventDefault();
+            const dept = document.getElementById('login-dept').value;
+            const name = document.getElementById('login-name').value;
+            const pwd = document.getElementById('login-pwd').value;
+
+            if (!db.users[name]) {
+                db.users[name] = { pwd: '88888', avatar: '', dept: dept };
+                saveDB();
+            }
+
+            const user = db.users[name];
+            
+            if (user.dept !== dept) { alert('部门选择错误'); return; }
+            if (pwd !== user.pwd) { alert('密码错误'); return; }
+
+            currentUser = { name, dept, ...user };
+            sessionStorage.setItem('currentUserMobile', JSON.stringify(currentUser));
+            
+            initSystem();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('currentUserMobile');
+            location.reload();
+        }
+
+        function initSystem() {
+            if(!currentUser) {
+                const stored = sessionStorage.getItem('currentUserMobile');
+                if(stored) currentUser = JSON.parse(stored);
+                else return; 
+            }
+
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('app-layout').classList.remove('hidden');
+            document.getElementById('app-layout').style.display = 'flex';
+
+            const deptNames = {
+                'market': '市场销售部', 'cs': '客户服务部', 'lab': '实验室', 'gm': '总经办', 'office': '综合办公室'
+            };
+            document.getElementById('nav-username').innerText = currentUser.name;
+            document.getElementById('nav-dept').innerText = deptNames[currentUser.dept];
+            
+            showModule('dashboard');
+        }
+
+        // --- 2. 路由与模块渲染 ---
+        function showModule(moduleName) {
+            const container = document.getElementById('main-container');
+            const title = document.getElementById('page-title');
+            
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            // 这里的event在移动端点击时可能需要注意兼容，但基本可行
+            if(event && event.currentTarget && event.currentTarget.classList) {
+                event.currentTarget.classList.add('active');
+            }
+
+            container.innerHTML = ''; 
+            container.scrollTop = 0; // 切换页面置顶
+
+            switch(moduleName) {
+                case 'dashboard':
+                    title.innerText = '工作台';
+                    renderDashboard(container);
+                    break;
+                case 'order':
+                    title.innerText = '客户回输订单';
+                    renderOrderModule(container);
+                    break;
+                case 'reception':
+                    title.innerText = '客户接待管理';
+                    renderReceptionModule(container);
+                    break;
+                case 'attendance':
+                    title.innerText = '考勤中心';
+                    renderAttendanceModule(container);
+                    break;
+                case 'chat':
+                    title.innerText = '内部沟通';
+                    renderChatModule(container);
+                    break;
+                case 'profile':
+                    title.innerText = '个人中心';
+                    renderProfileModule(container);
+                    break;
+            }
+        }
+
+        // --- 3. 各模块具体实现 (HTML结构微调以适配手机) ---
+
+        function renderDashboard(container) {
+            container.innerHTML = `
+                <div class="card">
+                    <h3><i class="fas fa-sun"></i> 欢迎，${currentUser.name}</h3>
+                    <p style="color:#666; font-size:14px;">今天是 ${new Date().toLocaleDateString()}</p>
+                    <div class="stat-row" style="display:flex; gap:15px; margin-top:20px;">
+                        <div style="flex:1; background:#eef2f5; padding:15px; border-radius:8px; text-align:center;">
+                            <h4 style="font-size:13px; color:#666;">待处理订单</h4>
+                            <span style="font-size:20px; color:var(--primary-blue); font-weight:bold;">${db.orders.filter(o => o.status !== '已完成').length}</span>
+                        </div>
+                        <div style="flex:1; background:#eef2f5; padding:15px; border-radius:8px; text-align:center;">
+                            <h4 style="font-size:13px; color:#666;">考勤状态</h4>
+                            <span style="font-size:20px; color:var(--success); font-weight:bold;">正常</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>公司公告</h3>
+                    <ul style="padding-left:20px; font-size:14px; line-height:1.6;">
+                        <li>关于实验室安全规范的最新通知</li>
+                        <li>吉林惟石生物获得新专利</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        // 订单模块 (增加 .table-responsive 包裹)
+        function renderOrderModule(container) {
+            let html = `<div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3>回输订单</h3>
+                    <button class="btn-sm btn-process" onclick="openOrderModal()"><i class="fas fa-plus"></i> 新建</button>
+                </div>
+                <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>单号</th><th>客户</th><th>细胞</th><th>日期</th><th>状态</th><th>负责人</th><th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            
+            db.orders.forEach((order, index) => {
+                let actionBtn = '-';
+                if (currentUser.dept === 'cs' && order.status === '待客服审批') {
+                    actionBtn = `<button class="btn-sm btn-approve" onclick="updateOrderStatus(${index}, '实验室生产中', 'lab')">审批</button>`;
+                } else if (currentUser.dept === 'lab' && order.status === '实验室生产中') {
+                    actionBtn = `<button class="btn-sm btn-process" onclick="updateOrderStatus(${index}, '生产完毕', 'cs')">完成</button>`;
+                } else if ((currentUser.dept === 'gm' || currentUser.dept === 'cs') && order.status === '生产完毕') {
+                     actionBtn = `<button class="btn-sm btn-approve" onclick="updateOrderStatus(${index}, '已完成', 'none')">回输</button>`;
+                } else if(currentUser.dept === 'gm') {
+                    actionBtn = `<button class="btn-sm btn-approve" onclick="updateOrderStatus(${index}, '强制通过', 'lab')">特批</button>`;
+                }
+
+                html += `<tr>
+                    <td>${1000+index}</td>
+                    <td>${order.clientName}</td>
+                    <td>${order.cellType}</td>
+                    <td>${order.date}</td>
+                    <td><span class="status-badge status-${order.status==='已完成'?'done':'pending'}">${order.status}</span></td>
+                    <td>${order.handler}</td>
+                    <td>${actionBtn}</td>
+                </tr>`;
+            });
+            
+            html += `</tbody></table></div></div>`; // 闭合 table-responsive
+            container.innerHTML = html;
+        }
+
+        function openOrderModal() {
+            document.getElementById('modal-title').innerText = "新建回输订单";
+            document.getElementById('modal-body').innerHTML = `
+                <div class="form-group"><label>客户姓名</label><input id="o_name" class="form-control"></div>
+                <div class="form-group"><label>细胞种类</label>
+                    <select id="o_type" class="form-control">
+                        <option>NK细胞</option><option>MSC间充质干细胞</option><option>CIK细胞</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>回输日期</label><input type="date" id="o_date" class="form-control"></div>
+                <div class="form-group"><label>具体要求</label><textarea id="o_req" class="form-control" rows="3"></textarea></div>
+            `;
+            document.getElementById('modal-form').style.display = 'flex';
+            window.currentSubmitType = 'order';
+        }
+
+        // 接待模块 (增加滚动包裹)
+        function renderReceptionModule(container) {
+            let html = `<div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3>接待申请</h3>
+                    <button class="btn-sm btn-process" onclick="openReceptionModal()"><i class="fas fa-plus"></i> 新建</button>
+                </div>
+                <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>申请人</th><th>目的</th><th>时间</th><th>地点</th><th>茶歇</th><th>状态</th><th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            db.receptions.forEach((r, index) => {
+                let actionBtn = '-';
+                if (r.status === '待处理' && (currentUser.dept === 'market' || currentUser.dept === 'cs' || currentUser.dept === 'gm')) {
+                    actionBtn = `<button class="btn-sm btn-approve" onclick="updateReceptionStatus(${index}, '已安排')">接单</button>`;
+                }
+                
+                html += `<tr>
+                    <td>${r.applicant}</td>
+                    <td>${r.purpose}</td>
+                    <td>${r.date}<br>${r.time}</td>
+                    <td>${r.location}</td>
+                    <td>${r.amenities}</td>
+                    <td><span class="status-badge status-${r.status==='已安排'?'done':'pending'}">${r.status}</span></td>
+                    <td>${actionBtn}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+            container.innerHTML = html;
+        }
+
+        function openReceptionModal() {
+            document.getElementById('modal-title').innerText = "新建接待申请";
+            document.getElementById('modal-body').innerHTML = `
+                <div class="form-group"><label>来访日期</label><input type="date" id="r_date" class="form-control"></div>
+                <div class="form-group"><label>具体时间</label><input type="time" id="r_time" class="form-control"></div>
+                <div class="form-group"><label>来访目的</label>
+                     <select id="r_purpose" class="form-control">
+                        <option>商务洽谈</option><option>公司参观</option><option>政府来访</option><option>业务咨询</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>参观地点</label>
+                     <select id="r_loc" class="form-control">
+                        <option>一楼展厅</option><option>三楼实验室</option><option>VIP接待室</option><option>全部参观</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>茶歇需求</label>
+                    <div style="margin-top:5px;">
+                        <label style="display:inline-block; font-weight:normal; margin-right:10px;"><input type="checkbox" value="茶水" name="amenity"> 茶水</label>
+                        <label style="display:inline-block; font-weight:normal; margin-right:10px;"><input type="checkbox" value="水果" name="amenity"> 水果</label>
+                        <label style="display:inline-block; font-weight:normal; margin-right:10px;"><input type="checkbox" value="大屏" name="amenity"> 开启大屏</label>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-form').style.display = 'flex';
+            window.currentSubmitType = 'reception';
+        }
+
+        // 考勤模块
+        function renderAttendanceModule(container) {
+            const today = new Date().toLocaleDateString();
+            const isClockedIn = db.leaves.some(l => l.type === '打卡' && l.date === today && l.name === currentUser.name);
+
+            container.innerHTML = `
+                <div class="card">
+                    <h3>日常考勤</h3>
+                    <div style="text-align:center; padding:20px;">
+                        <div style="font-size:30px; font-weight:bold; color:var(--primary-blue); margin-bottom:20px;">${new Date().toLocaleTimeString()}</div>
+                        ${!isClockedIn ? 
+                          `<button class="btn-login" style="width:150px; border-radius:50px; height:150px; font-size:18px;" onclick="clockIn()">上班打卡</button>` : 
+                          `<button class="btn-login" style="width:150px; border-radius:50px; height:150px; background:#ccc;" disabled>已打卡</button>`
+                        }
+                    </div>
+                </div>
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <h3>请假记录</h3>
+                        <button class="btn-sm btn-process" onclick="openLeaveModal()">申请</button>
+                    </div>
+                    <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>申请人</th><th>类型</th><th>日期/原因</th><th>状态</th><th>审批</th></tr></thead>
+                        <tbody>
+                            ${db.leaves.map((l, idx) => `
+                                <tr>
+                                    <td>${l.name}</td>
+                                    <td>${l.type}</td>
+                                    <td style="white-space:normal; min-width:120px;">${l.date}<br><span style="color:#888;font-size:12px;">${l.reason||''}</span></td>
+                                    <td>${l.status}</td>
+                                    ${(currentUser.dept === 'gm' && l.status === '待审批' && l.type !== '打卡') ? 
+                                      `<td><button class="btn-sm btn-approve" onclick="approveLeave(${idx})">通过</button></td>` : '<td>-</td>'}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openLeaveModal() {
+             document.getElementById('modal-title').innerText = "请假申请";
+             document.getElementById('modal-body').innerHTML = `
+                <div class="form-group"><label>类型</label>
+                    <select id="l_type" class="form-control">
+                        <option>事假</option><option>病假</option><option>年假</option><option>调休</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>日期</label><input type="date" id="l_date" class="form-control"></div>
+                <div class="form-group"><label>原因</label><textarea id="l_reason" class="form-control" rows="3"></textarea></div>
+            `;
+            document.getElementById('modal-form').style.display = 'flex';
+            window.currentSubmitType = 'leave';
+        }
+
+        // 聊天模块 (简化布局)
+        function renderChatModule(container) {
+            let msgs = db.chats[0].msgs;
+            let msgHtml = msgs.map(m => `
+                <div class="message ${m.sender === currentUser.name ? 'self' : 'other'}" style="${m.sender === currentUser.name ? 'justify-content: flex-end;' : ''}">
+                    <div class="msg-bubble" style="${m.sender === currentUser.name ? 'background:#95ec69; border:1px solid #85d659; color:black;' : 'background:white; border:1px solid #eee;'}">
+                        <div style="font-size:10px; color:#999; margin-bottom:2px;">${m.sender}</div>
+                        ${m.text}
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="card" style="padding:0; border:none; overflow:hidden;">
+                    <div class="chat-container">
+                        <div class="chat-sidebar">
+                            <div class="chat-list-item" style="background:#e6e6e6; flex-shrink:0;">
+                                <div style="width:30px; height:30px; background:var(--primary-blue); border-radius:4px; margin-right:5px; display:flex; align-items:center; justify-content:center; color:white;"><i class="fas fa-users"></i></div>
+                                <div>全员群</div>
+                            </div>
+                            <div class="chat-list-item" style="flex-shrink:0;">
+                                <div style="width:30px; height:30px; background:var(--accent-gold); border-radius:4px; margin-right:5px; display:flex; align-items:center; justify-content:center; color:white;"><i class="fas fa-flask"></i></div>
+                                <div>实验组</div>
+                            </div>
+                        </div>
+                        <div class="chat-main">
+                            <div class="brand" style="height:40px; justify-content:flex-start; padding-left:10px; background:white; border-bottom:1px solid #eee; color:black; font-size:14px;">
+                                全员大群 (${msgs.length})
+                            </div>
+                            <div class="chat-window" id="chat-window">
+                                ${msgHtml}
+                            </div>
+                            <div class="chat-input-area">
+                                <input type="text" id="chat-input" placeholder="说点什么..." onkeypress="if(event.keyCode==13) sendMsg()">
+                                <button class="btn-sm btn-process" onclick="sendMsg()" style="margin:0;">发送</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            setTimeout(() => {
+                let win = document.getElementById('chat-window');
+                if(win) win.scrollTop = win.scrollHeight;
+            }, 100);
+        }
+
+        function sendMsg() {
+            const input = document.getElementById('chat-input');
+            if(!input.value.trim()) return;
+            
+            db.chats[0].msgs.push({
+                sender: currentUser.name,
+                text: input.value,
+                time: new Date().toLocaleTimeString()
+            });
+            saveDB();
+            renderChatModule(document.getElementById('main-container'));
+        }
+
+        // 个人中心
+        function renderProfileModule(container) {
+            container.innerHTML = `
+                <div class="card">
+                    <h3>个人设置</h3>
+                    <div class="form-group"><label>用户名</label><input value="${currentUser.name}" disabled class="form-control"></div>
+                    <div class="form-group"><label>部门</label><input value="${currentUser.dept}" disabled class="form-control"></div>
+                    <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+                    <div class="form-group"><label>新密码</label><input type="password" id="new-pwd" class="form-control" placeholder="输入新密码"></div>
+                    <button class="btn-sm btn-process" style="width:100%; padding:10px;" onclick="changePwd()">保存修改</button>
+                </div>
+            `;
+        }
+        
+        function changePwd() {
+            const newP = document.getElementById('new-pwd').value;
+            if(newP) {
+                db.users[currentUser.name].pwd = newP;
+                saveDB();
+                alert("修改成功，请重新登录");
+                logout();
+            }
+        }
+
+        // --- 4. 通用逻辑处理 (保持不变) ---
+
+        function closeModal() {
+            document.getElementById('modal-form').style.display = 'none';
+        }
+
+        function submitModalForm() {
+            if(window.currentSubmitType === 'order') {
+                db.orders.push({
+                    clientName: document.getElementById('o_name').value,
+                    cellType: document.getElementById('o_type').value,
+                    date: document.getElementById('o_date').value,
+                    req: document.getElementById('o_req').value,
+                    status: '待客服审批',
+                    handler: '客服部',
+                    applicant: currentUser.name
+                });
+            } else if (window.currentSubmitType === 'reception') {
+                let amenities = [];
+                document.querySelectorAll('input[name="amenity"]:checked').forEach(c => amenities.push(c.value));
+                db.receptions.push({
+                    applicant: currentUser.name,
+                    date: document.getElementById('r_date').value,
+                    time: document.getElementById('r_time').value,
+                    purpose: document.getElementById('r_purpose').value,
+                    location: document.getElementById('r_loc').value,
+                    amenities: amenities.join(', '),
+                    status: '待处理'
+                });
+            } else if (window.currentSubmitType === 'leave') {
+                db.leaves.push({
+                    name: currentUser.name,
+                    type: document.getElementById('l_type').value,
+                    date: document.getElementById('l_date').value,
+                    reason: document.getElementById('l_reason').value,
+                    status: '待审批',
+                    approver: ''
+                });
+            }
+            saveDB();
+            closeModal();
+            
+            let currentModule = '';
+            if(window.currentSubmitType === 'order') currentModule = 'order';
+            if(window.currentSubmitType === 'reception') currentModule = 'reception';
+            if(window.currentSubmitType === 'leave') currentModule = 'attendance';
+            showModule(currentModule);
+        }
+
+        function updateOrderStatus(index, status, nextHandlerDept) {
+            db.orders[index].status = status;
+            let handlerName = '';
+            if(nextHandlerDept === 'lab') handlerName = '实验室';
+            if(nextHandlerDept === 'cs') handlerName = '客服部';
+            if(nextHandlerDept === 'none') handlerName = '归档';
+            db.orders[index].handler = handlerName;
+            saveDB();
+            showModule('order');
+        }
+
+        function updateReceptionStatus(index, status) {
+            db.receptions[index].status = status;
+            saveDB();
+            showModule('reception');
+        }
+
+        function clockIn() {
+            db.leaves.push({
+                name: currentUser.name,
+                type: '打卡',
+                date: new Date().toLocaleDateString(),
+                status: '正常',
+                approver: '系统'
+            });
+            saveDB();
+            showModule('attendance');
+        }
+
+        function approveLeave(index) {
+            db.leaves[index].status = '已通过';
+            db.leaves[index].approver = currentUser.name;
+            saveDB();
+            showModule('attendance');
+        }
+
+        window.onload = initSystem;
+
+    </script>
+</body>
+</html>
