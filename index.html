@@ -2,10 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 视口设置：禁止缩放，适配移动端宽度 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>吉林惟石生物 - 移动办公系统</title>
-    <!-- 引入图标库 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -21,9 +19,9 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft YaHei", sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        body { background-color: var(--bg-light); overflow-x: hidden; /* 防止横向滚动 */ }
+        body { background-color: var(--bg-light); overflow-x: hidden; height: 100vh; }
 
-        /* --- 背景动画 (保持不变) --- */
+        /* --- 背景动画 --- */
         .bg-animation {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
             background: linear-gradient(135deg, #fdfbf7 0%, #eef2f5 100%);
@@ -37,7 +35,7 @@
             100% { transform: translateY(-100vh) rotate(360deg); }
         }
 
-        /* --- 登录界面 (适配手机) --- */
+        /* --- 登录界面 --- */
         #login-page {
             display: flex; justify-content: center; align-items: center; height: 100vh;
             background-image: url('http://weishishengwu.cn/upload/202105/1620872579.jpg');
@@ -55,8 +53,8 @@
         .form-group { margin-bottom: 15px; text-align: left; }
         .form-group label { display: block; margin-bottom: 5px; color: var(--primary-blue); font-weight: bold; font-size: 14px; }
         .form-control {
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; /* 手机上字号大一点 */
-            transition: border-color 0.3s; appearance: none; /* 去除iOS默认样式 */
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;
+            transition: border-color 0.3s; appearance: none;
         }
         .btn-login {
             width: 100%; padding: 12px; background: var(--primary-blue); color: white;
@@ -66,14 +64,12 @@
         /* --- 主界面布局 --- */
         #app-layout { display: none; height: 100vh; display: flex; position: relative; overflow: hidden; }
         
-        /* 侧边栏 (适配手机：默认隐藏) */
+        /* 侧边栏 */
         .sidebar {
             width: var(--sidebar-width); background: var(--primary-blue); color: white;
             display: flex; flex-direction: column; flex-shrink: 0;
             position: relative; transition: transform 0.3s ease; z-index: 1000;
         }
-        
-        /* 遮罩层 (仅手机显示) */
         .sidebar-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 999;
@@ -101,13 +97,11 @@
         /* 主内容区 */
         .main-content { flex: 1; display: flex; flex-direction: column; background: #f4f6f9; position: relative; width: 100%; }
         
-        /* 顶部栏 */
         .topbar {
             height: 50px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             display: flex; justify-content: space-between; align-items: center; padding: 0 15px;
-            position: relative; z-index: 900;
+            position: relative; z-index: 900; flex-shrink: 0;
         }
-        /* 汉堡菜单按钮 (默认隐藏) */
         .menu-toggle-btn { display: none; font-size: 20px; color: var(--primary-blue); border: none; background: none; padding: 5px; margin-right: 10px;}
         
         .page-title { font-size: 16px; font-weight: bold; color: var(--primary-blue); display: flex; align-items: center; }
@@ -115,10 +109,9 @@
             background: none; border: none; cursor: pointer; margin-left: 10px; color: #666; font-size: 16px; padding: 5px;
         }
 
-        /* 内容展示区 */
         .content-area { flex: 1; padding: 15px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         
-        /* 通用卡片 */
+        /* 通用卡片与表格 */
         .card { 
             background: white; border-radius: 8px; padding: 15px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 15px; 
@@ -126,11 +119,8 @@
         }
         .card h3 { margin-bottom: 15px; color: var(--primary-blue); border-left: 4px solid var(--accent-gold); padding-left: 10px; font-size: 16px; }
 
-        /* 表格适配 (核心修改) */
-        .table-responsive {
-            width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px;
-        }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; /* 强制最小宽度，触发滚动 */ }
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; white-space: nowrap; }
         th { background: #f8f9fa; color: var(--primary-blue); font-weight: 600; }
         
@@ -138,27 +128,43 @@
         .status-pending { background: var(--warning); }
         .status-approved { background: var(--primary-blue); }
         .status-done { background: var(--success); }
+        .status-read { background: #e2e6ea; color: #666; }
+        .status-unread { background: var(--danger); color: white; }
         
         .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 3px; cursor: pointer; border: none; color: white; margin: 2px 0; }
         .btn-approve { background: var(--success); }
         .btn-process { background: var(--primary-blue); }
 
-        /* 聊天模块适配 */
-        .chat-container { display: flex; height: calc(100vh - 160px); border: 1px solid #ddd; border-radius: 8px; background: white; overflow: hidden;}
-        .chat-sidebar { width: 200px; border-right: 1px solid #eee; background: #fdfdfd; display: flex; flex-direction: column;}
-        .chat-list-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; font-size: 13px;}
-        .chat-main { flex: 1; display: flex; flex-direction: column; min-width: 0; /* 防止flex子项溢出 */ }
-        .chat-window { flex: 1; padding: 10px; overflow-y: auto; background: #f5f5f5; }
-        .message { margin-bottom: 10px; display: flex; }
-        .msg-bubble { max-width: 85%; padding: 8px 12px; border-radius: 10px; font-size: 14px; word-break: break-all; }
-        .chat-input-area { padding: 10px; border-top: 1px solid #eee; display: flex; align-items: center;}
-        .chat-input-area input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-right: 5px; height: 36px;}
+        /* --- 邮件模块样式 (新) --- */
+        .mail-list-item {
+            padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .mail-list-item:hover { background: #f9f9f9; }
+        .mail-list-item.unread { background: #fffcf5; border-left: 3px solid var(--danger); }
+        .mail-icon { 
+            width: 40px; height: 40px; background: #eef2f5; border-radius: 50%; color: var(--primary-blue);
+            display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;
+        }
+        .mail-info { flex: 1; min-width: 0; }
+        .mail-sender { font-weight: bold; font-size: 14px; color: #333; margin-bottom: 2px; }
+        .mail-subject { font-size: 13px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mail-date { font-size: 11px; color: #999; margin-left: 10px; white-space: nowrap;}
         
+        .mail-detail { animation: slideIn 0.3s ease; }
+        .mail-detail-header { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
+        .mail-body { font-size: 14px; line-height: 1.6; color: #333; min-height: 150px; white-space: pre-wrap;}
+        .attachment-box { 
+            margin-top: 20px; padding: 10px; background: #f8f9fa; border: 1px dashed #ccc; border-radius: 4px;
+            display: flex; align-items: center; font-size: 13px;
+        }
+        
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         /* 模态框适配 */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000;
-            padding: 20px;
+            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000; padding: 20px;
         }
         .modal-content { 
             background: white; padding: 20px; border-radius: 8px; 
@@ -167,39 +173,24 @@
         
         .hidden { display: none !important; }
 
-        /* ================= 📱 移动端响应式规则 ================= */
+        /* ================= 移动端响应式规则 ================= */
         @media screen and (max-width: 768px) {
-            /* 侧边栏变为抽屉式 */
             .sidebar {
                 position: fixed; top: 0; left: 0; height: 100%;
-                transform: translateX(-100%); /* 默认移出屏幕 */
+                transform: translateX(-100%); 
                 box-shadow: 5px 0 15px rgba(0,0,0,0.2);
             }
             .sidebar.active { transform: translateX(0); }
             .sidebar-overlay.active { display: block; }
-
-            /* 显示汉堡按钮 */
             .menu-toggle-btn { display: block; }
-
-            /* 聊天界面改为垂直堆叠，缩小左侧列表 */
-            .chat-container { flex-direction: column; height: 500px; }
-            .chat-sidebar { width: 100%; height: 60px; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid #eee; }
-            .chat-list-item { min-width: 140px; border-bottom: none; border-right: 1px solid #eee; }
-
-            /* 卡片内距缩小 */
-            .card { padding: 12px; }
-            
-            /* 统计数据堆叠 */
             .stat-row { flex-direction: column; gap: 10px !important; }
         }
     </style>
 </head>
 <body>
 
-    <!-- 背景装饰 -->
     <div class="bg-animation" id="bg-canvas"></div>
 
-    <!-- 1. 登录页面 -->
     <div id="login-page">
         <div class="login-box">
             <div class="login-logo">
@@ -230,12 +221,9 @@
         </div>
     </div>
 
-    <!-- 手机端侧边栏遮罩 -->
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-    <!-- 2. 系统主界面 -->
     <div id="app-layout" class="hidden">
-        <!-- 侧边栏 -->
         <div class="sidebar" id="sidebar">
             <div class="brand">
                 <span style="font-weight:bold; font-size:18px;">WS-OA System</span>
@@ -250,16 +238,17 @@
                 <div class="nav-item" onclick="showModule('order'); toggleSidebar()"><i class="fas fa-dna"></i> 客户回输订单</div>
                 <div class="nav-item" onclick="showModule('reception'); toggleSidebar()"><i class="fas fa-handshake"></i> 客户接待管理</div>
                 <div class="nav-item" onclick="showModule('attendance'); toggleSidebar()"><i class="fas fa-clock"></i> 考勤管理</div>
-                <div class="nav-item" onclick="showModule('chat'); toggleSidebar()"><i class="fas fa-comments"></i> 内部沟通</div>
+                <div class="nav-item" onclick="showModule('mail'); toggleSidebar()">
+                    <i class="fas fa-envelope"></i> 内部邮件 
+                    <span id="badge-mail" class="status-badge status-unread" style="margin-left:auto; display:none;">0</span>
+                </div>
                 <div class="nav-item" onclick="showModule('profile'); toggleSidebar()"><i class="fas fa-cog"></i> 个人中心</div>
             </nav>
         </div>
 
-        <!-- 主体内容 -->
         <div class="main-content">
             <div class="topbar">
                 <div class="page-title">
-                    <!-- 汉堡按钮 -->
                     <button class="menu-toggle-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
                     <span id="page-title">工作台</span>
                 </div>
@@ -270,12 +259,10 @@
             </div>
 
             <div class="content-area" id="main-container">
-                <!-- 动态内容将注入这里 -->
-            </div>
+                </div>
         </div>
     </div>
 
-    <!-- 模态框：通用申请表单 -->
     <div id="modal-form" class="modal">
         <div class="modal-content">
             <h3 id="modal-title">申请表单</h3>
@@ -288,11 +275,10 @@
     </div>
 
     <script>
-        // --- 移动端侧边栏切换逻辑 ---
+        // --- 核心工具逻辑 ---
         function toggleSidebar() {
             const sb = document.getElementById('sidebar');
             const ov = document.getElementById('sidebar-overlay');
-            // 切换类名
             if (sb.classList.contains('active')) {
                 sb.classList.remove('active');
                 ov.classList.remove('active');
@@ -302,9 +288,9 @@
             }
         }
 
-        // --- 生成背景细胞 (逻辑不变) ---
+        // --- 生成背景细胞动画 ---
         const bg = document.getElementById('bg-canvas');
-        for(let i=0; i<10; i++) { // 减少手机端数量提升性能
+        for(let i=0; i<8; i++) { 
             let div = document.createElement('div');
             div.className = 'cell';
             let size = Math.random() * 60 + 30;
@@ -316,39 +302,48 @@
             bg.appendChild(div);
         }
 
-        // --- 全局数据模拟 (LocalStorage) ---
-        const STORAGE_KEY = 'WS_OA_DATA_V2_MOBILE'; // 更改Key以免冲突
+        // --- 数据存储 (V3: 包含邮件系统) ---
+        // 更改 KEY 以便加载新的数据结构
+        const STORAGE_KEY = 'WS_OA_DATA_V3_MAIL'; 
         let currentUser = null;
 
+        // 初始化一些模拟数据
         let db = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
             orders: [],     
             receptions: [], 
-            leaves: [],     
-            users: {},      
-            chats: [        
-                { type: 'group', name: '全员大群', msgs: [{sender:'系统', text:'欢迎使用惟石生物移动办公系统', time:'12:00'}] }
+            leaves: [],      
+            users: {
+                // 预置一些用户方便测试收发邮件
+                "张三": { pwd: '88888', dept: 'market' },
+                "李四": { pwd: '88888', dept: 'lab' },
+                "王总": { pwd: '88888', dept: 'gm' }
+            },      
+            emails: [        
+                { id: 1, from: '系统通知', to: '张三', subject: '欢迎使用新版邮件系统', body: '您好，内部沟通模块已升级为邮件系统，支持附件上传（模拟）。', date: '2023-11-20', read: false, attachment: '使用手册.pdf' }
             ]
         };
 
         function saveDB() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+            updateMailBadge();
         }
 
-        // --- 1. 登录逻辑 (逻辑不变) ---
+        // --- 1. 登录逻辑 ---
         function handleLogin(e) {
             e.preventDefault();
             const dept = document.getElementById('login-dept').value;
-            const name = document.getElementById('login-name').value;
+            const name = document.getElementById('login-name').value.trim();
             const pwd = document.getElementById('login-pwd').value;
 
+            // 自动注册逻辑（仅用于演示）
             if (!db.users[name]) {
-                db.users[name] = { pwd: '88888', avatar: '', dept: dept };
+                db.users[name] = { pwd: '88888', dept: dept };
                 saveDB();
             }
 
             const user = db.users[name];
             
-            if (user.dept !== dept) { alert('部门选择错误'); return; }
+            if (user.dept !== dept) { alert('部门选择错误，该用户属于其他部门'); return; }
             if (pwd !== user.pwd) { alert('密码错误'); return; }
 
             currentUser = { name, dept, ...user };
@@ -377,24 +372,36 @@
                 'market': '市场销售部', 'cs': '客户服务部', 'lab': '实验室', 'gm': '总经办', 'office': '综合办公室'
             };
             document.getElementById('nav-username').innerText = currentUser.name;
-            document.getElementById('nav-dept').innerText = deptNames[currentUser.dept];
+            document.getElementById('nav-dept').innerText = deptNames[currentUser.dept] || currentUser.dept;
             
+            updateMailBadge();
             showModule('dashboard');
         }
 
-        // --- 2. 路由与模块渲染 ---
+        function updateMailBadge() {
+            if (!currentUser) return;
+            const unreadCount = db.emails.filter(e => e.to === currentUser.name && !e.read).length;
+            const badge = document.getElementById('badge-mail');
+            if (unreadCount > 0) {
+                badge.innerText = unreadCount;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // --- 2. 模块路由 ---
         function showModule(moduleName) {
             const container = document.getElementById('main-container');
             const title = document.getElementById('page-title');
             
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            // 这里的event在移动端点击时可能需要注意兼容，但基本可行
             if(event && event.currentTarget && event.currentTarget.classList) {
                 event.currentTarget.classList.add('active');
             }
 
             container.innerHTML = ''; 
-            container.scrollTop = 0; // 切换页面置顶
+            container.scrollTop = 0;
 
             switch(moduleName) {
                 case 'dashboard':
@@ -413,9 +420,9 @@
                     title.innerText = '考勤中心';
                     renderAttendanceModule(container);
                     break;
-                case 'chat':
-                    title.innerText = '内部沟通';
-                    renderChatModule(container);
+                case 'mail':
+                    title.innerText = '内部邮件';
+                    renderMailModule(container, 'inbox');
                     break;
                 case 'profile':
                     title.innerText = '个人中心';
@@ -424,35 +431,165 @@
             }
         }
 
-        // --- 3. 各模块具体实现 (HTML结构微调以适配手机) ---
+        // --- 3. 各模块实现 ---
 
         function renderDashboard(container) {
+            const unreadMail = db.emails.filter(e => e.to === currentUser.name && !e.read).length;
             container.innerHTML = `
                 <div class="card">
                     <h3><i class="fas fa-sun"></i> 欢迎，${currentUser.name}</h3>
                     <p style="color:#666; font-size:14px;">今天是 ${new Date().toLocaleDateString()}</p>
                     <div class="stat-row" style="display:flex; gap:15px; margin-top:20px;">
-                        <div style="flex:1; background:#eef2f5; padding:15px; border-radius:8px; text-align:center;">
+                        <div style="flex:1; background:#eef2f5; padding:15px; border-radius:8px; text-align:center;" onclick="showModule('order')">
                             <h4 style="font-size:13px; color:#666;">待处理订单</h4>
                             <span style="font-size:20px; color:var(--primary-blue); font-weight:bold;">${db.orders.filter(o => o.status !== '已完成').length}</span>
                         </div>
-                        <div style="flex:1; background:#eef2f5; padding:15px; border-radius:8px; text-align:center;">
-                            <h4 style="font-size:13px; color:#666;">考勤状态</h4>
-                            <span style="font-size:20px; color:var(--success); font-weight:bold;">正常</span>
+                        <div style="flex:1; background:#fffcf5; padding:15px; border-radius:8px; text-align:center;" onclick="showModule('mail')">
+                            <h4 style="font-size:13px; color:#666;">未读邮件</h4>
+                            <span style="font-size:20px; color:var(--danger); font-weight:bold;">${unreadMail}</span>
                         </div>
                     </div>
                 </div>
                 <div class="card">
                     <h3>公司公告</h3>
                     <ul style="padding-left:20px; font-size:14px; line-height:1.6;">
-                        <li>关于实验室安全规范的最新通知</li>
-                        <li>吉林惟石生物获得新专利</li>
+                        <li>关于实验室无菌操作规范的更新通知</li>
+                        <li>吉林惟石生物第三季度总结会议安排</li>
                     </ul>
                 </div>
             `;
         }
 
-        // 订单模块 (增加 .table-responsive 包裹)
+        // --- 邮件模块 (核心修改) ---
+        function renderMailModule(container, viewType, mailId = null) {
+            if (viewType === 'inbox') {
+                // 收件箱视图
+                const myMails = db.emails.filter(e => e.to === currentUser.name).sort((a,b) => new Date(b.date) - new Date(a.date));
+                
+                let listHtml = myMails.length > 0 ? myMails.map(m => `
+                    <div class="mail-list-item ${m.read ? '' : 'unread'}" onclick="renderMailModule(document.getElementById('main-container'), 'detail', ${m.id})">
+                        <div class="mail-icon"><i class="fas ${m.read ? 'fa-envelope-open' : 'fa-envelope'}"></i></div>
+                        <div class="mail-info">
+                            <div class="mail-sender">${m.from}</div>
+                            <div class="mail-subject">${m.subject} ${m.attachment ? '<i class="fas fa-paperclip" style="font-size:12px;color:#999;"></i>' : ''}</div>
+                        </div>
+                        <div class="mail-date">${m.date.substring(5)}</div>
+                    </div>
+                `).join('') : '<div style="padding:40px; text-align:center; color:#999;">暂无邮件</div>';
+
+                container.innerHTML = `
+                    <div class="card" style="padding:0; overflow:hidden;">
+                        <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                            <h3 style="margin:0; border:none; padding:0;">收件箱 (${myMails.length})</h3>
+                            <button class="btn-sm btn-process" onclick="renderMailModule(document.getElementById('main-container'), 'compose')">
+                                <i class="fas fa-pen"></i> 写信
+                            </button>
+                        </div>
+                        <div style="background:white;">${listHtml}</div>
+                    </div>
+                `;
+            } else if (viewType === 'compose') {
+                // 写信视图
+                // 生成用户列表供选择
+                let userOptions = Object.keys(db.users).map(u => `<option value="${u}">${u} (${db.users[u].dept})</option>`).join('');
+
+                container.innerHTML = `
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <h3>写邮件</h3>
+                            <button class="btn-sm" style="background:#eee; color:#333;" onclick="showModule('mail')">取消</button>
+                        </div>
+                        <div class="form-group">
+                            <label>收件人</label>
+                            <select id="mail-to" class="form-control">
+                                <option value="">请选择收件人...</option>
+                                ${userOptions}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>主题</label>
+                            <input type="text" id="mail-subject" class="form-control" placeholder="邮件主题">
+                        </div>
+                        <div class="form-group">
+                            <label>内容</label>
+                            <textarea id="mail-body" class="form-control" rows="8" placeholder="在此输入邮件正文..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>附件上传 (模拟)</label>
+                            <input type="file" id="mail-file" class="form-control" style="padding:8px;">
+                            <p style="font-size:12px; color:#999; margin-top:5px;">* 支持Word, Excel, PDF, 图片等格式</p>
+                        </div>
+                        <button class="btn-login" onclick="sendMail()">发送邮件</button>
+                    </div>
+                `;
+            } else if (viewType === 'detail') {
+                // 详情视图
+                const mail = db.emails.find(e => e.id === mailId);
+                if(mail && !mail.read) {
+                    mail.read = true;
+                    saveDB();
+                }
+
+                container.innerHTML = `
+                    <div class="card mail-detail">
+                        <div style="margin-bottom:15px;">
+                            <button class="btn-sm" style="background:#eee; color:#333;" onclick="showModule('mail')"><i class="fas fa-arrow-left"></i> 返回收件箱</button>
+                        </div>
+                        <div class="mail-detail-header">
+                            <h2 style="font-size:18px; color:var(--primary-blue); margin-bottom:10px;">${mail.subject}</h2>
+                            <div style="font-size:13px; color:#666;">
+                                <strong>发件人：</strong> ${mail.from}<br>
+                                <strong>时　间：</strong> ${mail.date}
+                            </div>
+                        </div>
+                        <div class="mail-body">${mail.body}</div>
+                        ${mail.attachment ? `
+                            <div class="attachment-box" onclick="alert('前端演示模式：附件 [${mail.attachment}] 下载功能需后端支持。')">
+                                <i class="fas fa-file-alt" style="font-size:20px; color:var(--primary-blue); margin-right:10px;"></i>
+                                <div>
+                                    <div style="font-weight:bold;">${mail.attachment}</div>
+                                    <div style="font-size:11px; color:#999;">点击下载</div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+        }
+
+        function sendMail() {
+            const to = document.getElementById('mail-to').value;
+            const subject = document.getElementById('mail-subject').value;
+            const body = document.getElementById('mail-body').value;
+            const fileInput = document.getElementById('mail-file');
+            
+            if(!to) { alert("请选择收件人"); return; }
+            if(!subject) { alert("请填写主题"); return; }
+
+            // 模拟附件文件名获取
+            let attachmentName = null;
+            if(fileInput.files.length > 0) {
+                attachmentName = fileInput.files[0].name;
+            }
+
+            const newMail = {
+                id: Date.now(),
+                from: currentUser.name,
+                to: to,
+                subject: subject,
+                body: body,
+                date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString(),
+                read: false,
+                attachment: attachmentName
+            };
+
+            db.emails.push(newMail);
+            saveDB();
+            alert("邮件已发送！");
+            showModule('mail'); // 返回收件箱
+        }
+
+        // --- 订单模块 ---
         function renderOrderModule(container) {
             let html = `<div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -463,7 +600,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>单号</th><th>客户</th><th>细胞</th><th>日期</th><th>状态</th><th>负责人</th><th>操作</th>
+                            <th>单号</th><th>客户</th><th>细胞</th><th>状态</th><th>负责人</th><th>操作</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -484,14 +621,13 @@
                     <td>${1000+index}</td>
                     <td>${order.clientName}</td>
                     <td>${order.cellType}</td>
-                    <td>${order.date}</td>
                     <td><span class="status-badge status-${order.status==='已完成'?'done':'pending'}">${order.status}</span></td>
                     <td>${order.handler}</td>
                     <td>${actionBtn}</td>
                 </tr>`;
             });
             
-            html += `</tbody></table></div></div>`; // 闭合 table-responsive
+            html += `</tbody></table></div></div>`;
             container.innerHTML = html;
         }
 
@@ -511,7 +647,7 @@
             window.currentSubmitType = 'order';
         }
 
-        // 接待模块 (增加滚动包裹)
+        // --- 接待模块 ---
         function renderReceptionModule(container) {
             let html = `<div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -522,7 +658,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>申请人</th><th>目的</th><th>时间</th><th>地点</th><th>茶歇</th><th>状态</th><th>操作</th>
+                            <th>申请人</th><th>时间</th><th>地点</th><th>状态</th><th>操作</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -535,10 +671,8 @@
                 
                 html += `<tr>
                     <td>${r.applicant}</td>
-                    <td>${r.purpose}</td>
                     <td>${r.date}<br>${r.time}</td>
                     <td>${r.location}</td>
-                    <td>${r.amenities}</td>
                     <td><span class="status-badge status-${r.status==='已安排'?'done':'pending'}">${r.status}</span></td>
                     <td>${actionBtn}</td>
                 </tr>`;
@@ -566,7 +700,6 @@
                     <div style="margin-top:5px;">
                         <label style="display:inline-block; font-weight:normal; margin-right:10px;"><input type="checkbox" value="茶水" name="amenity"> 茶水</label>
                         <label style="display:inline-block; font-weight:normal; margin-right:10px;"><input type="checkbox" value="水果" name="amenity"> 水果</label>
-                        <label style="display:inline-block; font-weight:normal; margin-right:10px;"><input type="checkbox" value="大屏" name="amenity"> 开启大屏</label>
                     </div>
                 </div>
             `;
@@ -574,7 +707,7 @@
             window.currentSubmitType = 'reception';
         }
 
-        // 考勤模块
+        // --- 考勤模块 ---
         function renderAttendanceModule(container) {
             const today = new Date().toLocaleDateString();
             const isClockedIn = db.leaves.some(l => l.type === '打卡' && l.date === today && l.name === currentUser.name);
@@ -597,11 +730,10 @@
                     </div>
                     <div class="table-responsive">
                     <table>
-                        <thead><tr><th>申请人</th><th>类型</th><th>日期/原因</th><th>状态</th><th>审批</th></tr></thead>
+                        <thead><tr><th>类型</th><th>日期</th><th>状态</th><th>审批</th></tr></thead>
                         <tbody>
                             ${db.leaves.map((l, idx) => `
                                 <tr>
-                                    <td>${l.name}</td>
                                     <td>${l.type}</td>
                                     <td style="white-space:normal; min-width:120px;">${l.date}<br><span style="color:#888;font-size:12px;">${l.reason||''}</span></td>
                                     <td>${l.status}</td>
@@ -631,66 +763,7 @@
             window.currentSubmitType = 'leave';
         }
 
-        // 聊天模块 (简化布局)
-        function renderChatModule(container) {
-            let msgs = db.chats[0].msgs;
-            let msgHtml = msgs.map(m => `
-                <div class="message ${m.sender === currentUser.name ? 'self' : 'other'}" style="${m.sender === currentUser.name ? 'justify-content: flex-end;' : ''}">
-                    <div class="msg-bubble" style="${m.sender === currentUser.name ? 'background:#95ec69; border:1px solid #85d659; color:black;' : 'background:white; border:1px solid #eee;'}">
-                        <div style="font-size:10px; color:#999; margin-bottom:2px;">${m.sender}</div>
-                        ${m.text}
-                    </div>
-                </div>
-            `).join('');
-
-            container.innerHTML = `
-                <div class="card" style="padding:0; border:none; overflow:hidden;">
-                    <div class="chat-container">
-                        <div class="chat-sidebar">
-                            <div class="chat-list-item" style="background:#e6e6e6; flex-shrink:0;">
-                                <div style="width:30px; height:30px; background:var(--primary-blue); border-radius:4px; margin-right:5px; display:flex; align-items:center; justify-content:center; color:white;"><i class="fas fa-users"></i></div>
-                                <div>全员群</div>
-                            </div>
-                            <div class="chat-list-item" style="flex-shrink:0;">
-                                <div style="width:30px; height:30px; background:var(--accent-gold); border-radius:4px; margin-right:5px; display:flex; align-items:center; justify-content:center; color:white;"><i class="fas fa-flask"></i></div>
-                                <div>实验组</div>
-                            </div>
-                        </div>
-                        <div class="chat-main">
-                            <div class="brand" style="height:40px; justify-content:flex-start; padding-left:10px; background:white; border-bottom:1px solid #eee; color:black; font-size:14px;">
-                                全员大群 (${msgs.length})
-                            </div>
-                            <div class="chat-window" id="chat-window">
-                                ${msgHtml}
-                            </div>
-                            <div class="chat-input-area">
-                                <input type="text" id="chat-input" placeholder="说点什么..." onkeypress="if(event.keyCode==13) sendMsg()">
-                                <button class="btn-sm btn-process" onclick="sendMsg()" style="margin:0;">发送</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            setTimeout(() => {
-                let win = document.getElementById('chat-window');
-                if(win) win.scrollTop = win.scrollHeight;
-            }, 100);
-        }
-
-        function sendMsg() {
-            const input = document.getElementById('chat-input');
-            if(!input.value.trim()) return;
-            
-            db.chats[0].msgs.push({
-                sender: currentUser.name,
-                text: input.value,
-                time: new Date().toLocaleTimeString()
-            });
-            saveDB();
-            renderChatModule(document.getElementById('main-container'));
-        }
-
-        // 个人中心
+        // --- 个人中心 ---
         function renderProfileModule(container) {
             container.innerHTML = `
                 <div class="card">
@@ -700,6 +773,7 @@
                     <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
                     <div class="form-group"><label>新密码</label><input type="password" id="new-pwd" class="form-control" placeholder="输入新密码"></div>
                     <button class="btn-sm btn-process" style="width:100%; padding:10px;" onclick="changePwd()">保存修改</button>
+                    <button class="btn-sm" style="width:100%; padding:10px; margin-top:10px; background:#dc3545;" onclick="localStorage.removeItem(STORAGE_KEY); location.reload();">重置所有系统数据(测试用)</button>
                 </div>
             `;
         }
@@ -714,7 +788,7 @@
             }
         }
 
-        // --- 4. 通用逻辑处理 (保持不变) ---
+        // --- 4. 提交逻辑与数据处理 ---
 
         function closeModal() {
             document.getElementById('modal-form').style.display = 'none';
@@ -731,6 +805,7 @@
                     handler: '客服部',
                     applicant: currentUser.name
                 });
+                showModule('order');
             } else if (window.currentSubmitType === 'reception') {
                 let amenities = [];
                 document.querySelectorAll('input[name="amenity"]:checked').forEach(c => amenities.push(c.value));
@@ -743,6 +818,7 @@
                     amenities: amenities.join(', '),
                     status: '待处理'
                 });
+                showModule('reception');
             } else if (window.currentSubmitType === 'leave') {
                 db.leaves.push({
                     name: currentUser.name,
@@ -752,15 +828,10 @@
                     status: '待审批',
                     approver: ''
                 });
+                showModule('attendance');
             }
             saveDB();
             closeModal();
-            
-            let currentModule = '';
-            if(window.currentSubmitType === 'order') currentModule = 'order';
-            if(window.currentSubmitType === 'reception') currentModule = 'reception';
-            if(window.currentSubmitType === 'leave') currentModule = 'attendance';
-            showModule(currentModule);
         }
 
         function updateOrderStatus(index, status, nextHandlerDept) {
